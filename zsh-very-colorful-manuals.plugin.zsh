@@ -17,13 +17,16 @@ EOF
 fi
 
 function man() {
+
+
+
 	env \
-		LESS_TERMCAP_mb=$(printf "\e[1;33;44m") \
-		LESS_TERMCAP_md=$(printf "\e[1;32m") \
-		LESS_TERMCAP_me=$(printf "\e[35m") \
-		LESS_TERMCAP_se=$(printf "\e[32m") \
-		LESS_TERMCAP_so=$(printf "\e[1;34m") \
-		LESS_TERMCAP_ue=$(printf "\e[37m") \
+		LESS_TERMCAP_mb=$(printf "\e[0;33;44m") \
+		LESS_TERMCAP_md=$(printf "\e[0;32m") \
+		LESS_TERMCAP_me=$(printf "\e[0;34m") \
+		LESS_TERMCAP_se=$(printf "\e[33m") \
+		LESS_TERMCAP_so=$(printf "\e[0;1;35m") \
+		LESS_TERMCAP_ue=$(printf "\e[0;1;31m") \
 		LESS_TERMCAP_us=$(printf "\e[1;36;4m") \
 		PAGER="${commands[less]:-$PAGER}" \
 		_NROFF_U=1 \
