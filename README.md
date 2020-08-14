@@ -1,4 +1,8 @@
 # zsh-very-colorful-manuals
+
+Custom colorscheme for man pages.
+
+
 ## Install for Oh My Zsh
 
 ```sh
