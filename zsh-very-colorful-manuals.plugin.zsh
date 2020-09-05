@@ -16,21 +16,9 @@ EOF
 	fi
 fi
 
-function man() {
 
+0="${${0:#$ZSH_ARGZERO}:-${(%):-%N}}"
+0="${${(M)0:#/*}:-$PWD/$0}"
 
-
-	env \
-		LESS_TERMCAP_mb=$(printf "\e[0;33;44m") \
-		LESS_TERMCAP_md=$(printf "\e[0;32m") \
-		LESS_TERMCAP_me=$(printf "\e[0;34m") \
-		LESS_TERMCAP_se=$(printf "\e[33m") \
-		LESS_TERMCAP_so=$(printf "\e[0;1;35m") \
-		LESS_TERMCAP_ue=$(printf "\e[0;1;31m") \
-		LESS_TERMCAP_us=$(printf "\e[1;36;4m") \
-		PAGER="${commands[less]:-$PAGER}" \
-		_NROFF_U=1 \
-		PATH="$HOME/bin:$PATH" \
-			man "$@"
-}
-
+fpath+="${0:h}/bin"
+autoload -Uz man
