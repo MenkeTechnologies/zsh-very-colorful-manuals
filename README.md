@@ -2,6 +2,13 @@
 
 Custom colorscheme for man pages.
 
+## Install for Zinit
+> `~/.zshrc`
+```sh
+source "$HOME/.zinit/bin/zinit.zsh"
+zinit ice lucid nocompile
+zinit load MenkeTechnologies/zsh-very-colorful-manuals
+```
 
 ## Install for Oh My Zsh
 
