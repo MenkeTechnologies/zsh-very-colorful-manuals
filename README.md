@@ -30,25 +30,25 @@ __     __    _     _     ____  ____  _   _  ____
 
 ## `> SYSTEM OVERVIEW`
 
-`zsh-very-colorful-manuals` exports the `LESS_TERMCAP_*` env vars that `man`'s pager (`less` by default) consults for bold/underline/standout rendering. Result: `man <anything>` looks like the rest of your cyberpunk terminal — bright headers, glowing keywords, underlined options.
+`zsh-very-colorful-manuals` ships an autoloaded `man` wrapper that injects `LESS_TERMCAP_*` env vars on the fly, telling `man`'s pager (`less` by default) how to render bold/underline/standout. Result: `man <anything>` looks like the rest of your cyberpunk terminal — bright headers, glowing keywords, underlined options.
 
-Zero runtime cost. One sourced plugin. Works in every man page on the system.
+One sourced plugin, no global env-var pollution — the colors only kick in when you actually call `man`. Works on every man page on the system. Includes a Solaris `nroff` shim for fixed-width rendering.
 
 ---
 
 ## `> HOW IT WORKS`
 
-`man` pipes its rendered output through a pager (usually `less`). `less` reads `LESS_TERMCAP_md` for bold, `LESS_TERMCAP_us` for underline, `LESS_TERMCAP_so` for standout, etc. This plugin sets all eight to neon ANSI escape codes:
+`man` pipes its rendered output through a pager (usually `less`). `less` reads `LESS_TERMCAP_md` for bold, `LESS_TERMCAP_us` for underline, `LESS_TERMCAP_so` for standout, etc. The plugin autoloads a `man` function from `bin/man` that invokes the system `man` with the following `LESS_TERMCAP_*` overrides in its environment (see [`bin/man`](bin/man) for the exact escape codes):
 
 ```
-[x] LESS_TERMCAP_md (bold)       → bright magenta
-[x] LESS_TERMCAP_us (underline)  → bright cyan
-[x] LESS_TERMCAP_so (standout)   → black-on-yellow status line
-[x] LESS_TERMCAP_me / _ue / _se  → reset
-[x] LESS_TERMCAP_mb (blink)      → bright red
+[x] LESS_TERMCAP_md (bold)       → green
+[x] LESS_TERMCAP_us (underline)  → bright cyan, underlined
+[x] LESS_TERMCAP_so (standout)   → bright magenta
+[x] LESS_TERMCAP_me / _ue / _se  → reset (blue / bright red / yellow)
+[x] LESS_TERMCAP_mb (blink)      → yellow on blue
 ```
 
-No `man` config touched. No system theme installed. Pure shell-env tinting.
+No `man` config touched. No system theme installed. No env vars leaked into the parent shell — the wrapper hands them to `man` via `env` only.
 
 ---
 
@@ -82,9 +82,9 @@ source zsh-very-colorful-manuals/zsh-very-colorful-manuals.plugin.zsh
 ## `> TRY IT`
 
 ```sh
-man ls          # bright cyan flags, magenta DESCRIPTION header
+man ls          # green bold, bright cyan underlined flags
 man git-rebase  # examples GLOW
-man bash        # 4000-line manual finally readable
+man bash        # the brick-sized manual, finally readable
 ```
 
 ---
