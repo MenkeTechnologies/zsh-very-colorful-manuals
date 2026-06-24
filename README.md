@@ -15,6 +15,8 @@ __     __    _     _     ____  ____  _   _  ____
 <code>// `man <cmd>` IS GREEN ON BLACK NOW. NEON HEADERS. UNDERLINED EXAMPLES. NO MORE GRAYSCALE WALLS OF TEXT.</code>
 </p>
 
+### [`Read the Docs`](https://menketechnologies.github.io/zsh-very-colorful-manuals/) &middot; [`Engineering Report`](https://menketechnologies.github.io/zsh-very-colorful-manuals/report.html)
+
 ---
 
 [![Tag](https://img.shields.io/badge/tag-v0.1.0-39ff14.svg)](https://github.com/MenkeTechnologies/zsh-very-colorful-manuals/tags)

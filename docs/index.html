@@ -1,0 +1,171 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="color-scheme" content="dark light">
+  <meta name="description" content="zsh-very-colorful-manuals — a zsh plugin that colorizes man pages by injecting LESS_TERMCAP_* ANSI escapes into less. An autoloaded man wrapper (bin/man) runs the system man through env with 7 LESS_TERMCAP_* overrides: green bold headers, bold-cyan underlined option names, bright-magenta standout. No global env-var leak, no man config touched, includes a Solaris nroff shim.">
+  <title>zsh-very-colorful-manuals — Documentation</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;600;700;900&amp;family=Share+Tech+Mono&amp;display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="hud-static.css">
+  <link rel="stylesheet" href="tutorial.css">
+  <style>
+    .tutorial-main { max-width: 68rem; }
+    .docs-build-line { margin: 0.35rem 0 0; font-family: 'Share Tech Mono', ui-monospace, monospace; font-size: 11px; color: var(--text-dim); letter-spacing: 0.03em; max-width: 42rem; opacity: 0.75; }
+    .hub-scheme-strip { border-bottom: 1px dashed var(--border); background: color-mix(in srgb, var(--bg-secondary) 85%, transparent); padding: 0.55rem 1.5rem 0.65rem; position: relative; }
+    .hub-scheme-strip-inner { max-width: 68rem; margin: 0 auto; display: flex; align-items: center; gap: 0.85rem; }
+    .hub-scheme-strip .hud-scheme-label { flex: 0 0 auto; font-family: 'Orbitron', sans-serif; font-size: 9px; font-weight: 700; letter-spacing: 2px; text-transform: uppercase; color: var(--accent); text-align: left; }
+    .hub-scheme-strip .scheme-grid { flex: 1 1 auto; display: grid; grid-template-columns: repeat(5, minmax(0, 1fr)); gap: 6px; }
+    @media (max-width: 720px) { .hub-scheme-strip-inner { flex-direction: column; align-items: stretch; } .hub-scheme-strip .scheme-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
+    .example-tbl { width: 100%; border-collapse: collapse; margin: 0.6rem 0; font-size: 12.5px; }
+    .example-tbl td { padding: 6px 10px; border: 1px solid var(--border); vertical-align: top; color: var(--text-dim); }
+    .example-tbl td:first-child { width: 28%; color: var(--cyan); font-family: 'Share Tech Mono', monospace; }
+    .example-tbl td code { color: var(--accent-light); background: var(--bg); padding: 1px 5px; font-size: 12px; }
+    .sibling-list { columns: 2; column-gap: 1.5rem; padding-left: 1.1rem; }
+    .sibling-list li { break-inside: avoid; margin-bottom: 4px; }
+  </style>
+</head>
+<body>
+  <div class="app tutorial-app" id="docsApp">
+    <div class="crt-scanline" id="crtH" aria-hidden="true"></div>
+    <div class="crt-scanline-v" id="crtV" aria-hidden="true"></div>
+
+    <header class="tutorial-header">
+      <div class="tutorial-header-inner">
+        <div>
+          <h1 class="tutorial-brand">// ZSH-VERY-COLORFUL-MANUALS &mdash; COLORIZE MAN PAGES // LESS_TERMCAP_* ANSI</h1>
+          <nav class="tutorial-crumbs" aria-label="Breadcrumb">
+            <span class="current">Docs</span>
+            <span class="sep">/</span>
+            <a href="report.html">Engineering Report</a>
+            <span class="sep">/</span>
+            <a href="https://github.com/MenkeTechnologies/zsh-very-colorful-manuals" target="_blank" rel="noopener noreferrer">GitHub</a>
+            <span class="sep">/</span>
+            <a href="https://github.com/MenkeTechnologies/zpwr" target="_blank" rel="noopener noreferrer">zpwr</a>
+            <span class="sep">/</span>
+            <a href="https://github.com/MenkeTechnologies/MenkeTechnologiesMeta" target="_blank" rel="noopener noreferrer">Meta</a>
+          </nav>
+          <p class="docs-build-line">zsh plugin &middot; autoloaded <code>man</code> wrapper &middot; injects <code>LESS_TERMCAP_*</code> ANSI escapes into <code>less</code> &middot; no global env pollution &middot; Solaris <code>nroff</code> shim</p>
+        </div>
+        <div class="tutorial-toolbar">
+          <button type="button" class="btn btn-secondary" id="btnTheme" title="Toggle light/dark">Theme</button>
+          <button type="button" class="btn btn-secondary active" id="btnCrt" title="CRT scanline overlay">CRT</button>
+          <button type="button" class="btn btn-secondary active" id="btnNeon" title="Neon border pulse">Neon</button>
+          <a class="btn btn-secondary" href="https://github.com/MenkeTechnologies/zsh-very-colorful-manuals" target="_blank" rel="noopener noreferrer">GitHub</a>
+          <a class="btn btn-secondary" href="https://github.com/MenkeTechnologies/zsh-very-colorful-manuals/issues" target="_blank" rel="noopener noreferrer">Issues</a>
+        </div>
+      </div>
+    </header>
+
+    <div class="hub-scheme-strip">
+      <div class="hub-scheme-strip-inner">
+        <span class="hud-scheme-label">// Color scheme</span>
+        <div class="scheme-grid" id="hudSchemeGrid"></div>
+      </div>
+    </div>
+
+    <main class="tutorial-main">
+      <h2 class="tutorial-title"><span class="step-hash">&gt;_</span>ZSH-VERY-COLORFUL-MANUALS</h2>
+      <p class="tutorial-subtitle"><strong>Re-paints the terminal's <code>man</code> output with ANSI colors.</strong> The plugin autoloads a <code>man</code> wrapper that injects <code>LESS_TERMCAP_*</code> environment variables on the fly, telling <code>man</code>'s pager (<code>less</code> by default) how to render bold / underline / standout. <code>man &lt;anything&gt;</code> gets green bold headers, bold-cyan underlined option names, and bright-magenta standout. The colors only kick in when you call <code>man</code> &mdash; nothing leaks into the parent shell.</p>
+
+      <section class="tutorial-section">
+        <h2>Install</h2>
+<pre># Zinit
+zinit ice lucid nocompile
+zinit load MenkeTechnologies/zsh-very-colorful-manuals
+
+# Oh My Zsh
+git clone https://github.com/MenkeTechnologies/zsh-very-colorful-manuals \
+    "$HOME/.oh-my-zsh/custom/plugins/zsh-very-colorful-manuals"
+# then: plugins+=(zsh-very-colorful-manuals)
+
+# Manual
+git clone https://github.com/MenkeTechnologies/zsh-very-colorful-manuals
+source zsh-very-colorful-manuals/zsh-very-colorful-manuals.plugin.zsh</pre>
+        <p>After sourcing, the plugin appends <code>${0:h}/bin</code> to <code>fpath</code> and runs <code>autoload -Uz man</code>. The next time you call <code>man</code>, zsh resolves the autoloaded function from <code>bin/man</code> instead of going straight to the system binary.</p>
+      </section>
+
+      <section class="tutorial-section">
+        <h2>How it works</h2>
+        <p><code>man</code> pipes its rendered output through a pager (usually <code>less</code>). <code>less</code> reads <code>LESS_TERMCAP_md</code> for bold, <code>LESS_TERMCAP_us</code> for underline, <code>LESS_TERMCAP_so</code> for standout, and the matching <code>_me</code> / <code>_ue</code> / <code>_se</code> reset sequences. The wrapper in <code>bin/man</code> defines a <code>__man()</code> helper that builds each escape with <code>printf '\e[&hellip;m'</code> and hands them to the system <code>man</code> through <code>env</code> &mdash; so the variables live only in that one subprocess.</p>
+        <table class="example-tbl">
+          <tbody>
+            <tr><td><code>LESS_TERMCAP_md</code></td><td>bold start &mdash; <code>0;32m</code> (green) &mdash; section headers</td></tr>
+            <tr><td><code>LESS_TERMCAP_me</code></td><td>bold end &mdash; <code>0;34m</code> (reset to blue)</td></tr>
+            <tr><td><code>LESS_TERMCAP_us</code></td><td>underline start &mdash; <code>1;36;4m</code> (bold cyan, underlined) &mdash; option names</td></tr>
+            <tr><td><code>LESS_TERMCAP_ue</code></td><td>underline end &mdash; <code>0;1;31m</code> (bright red)</td></tr>
+            <tr><td><code>LESS_TERMCAP_so</code></td><td>standout start &mdash; <code>0;1;35m</code> (bright magenta) &mdash; the <code>(END)</code> marker and search matches</td></tr>
+            <tr><td><code>LESS_TERMCAP_se</code></td><td>standout end &mdash; <code>33m</code> (yellow)</td></tr>
+            <tr><td><code>LESS_TERMCAP_mb</code></td><td>blink &mdash; <code>0;33;44m</code> (yellow on blue)</td></tr>
+          </tbody>
+        </table>
+        <p>The exact SGR codes above are pinned by the test suite &mdash; see the <a href="report.html">engineering report</a> for the full color contract.</p>
+      </section>
+
+      <section class="tutorial-section">
+        <h2>What the wrapper sets</h2>
+        <p>Besides the seven <code>LESS_TERMCAP_*</code> escapes, the <code>env</code> block carries three more variables into the <code>man</code> subprocess:</p>
+        <table class="example-tbl">
+          <tbody>
+            <tr><td><code>PAGER</code></td><td><code>${commands[less]:-$PAGER}</code> &mdash; resolves zsh's <code>commands</code> hash for <code>less</code> first, falling back to your <code>$PAGER</code>. Without this, a <code>PAGER=most</code> setting would ignore the <code>LESS_TERMCAP_*</code> coloring.</td></tr>
+            <tr><td><code>_NROFF_U</code></td><td><code>1</code> &mdash; read by the Solaris <code>nroff</code> shim to enable underline (EUC) rendering. No effect on Linux/macOS.</td></tr>
+            <tr><td><code>PATH</code></td><td><code>$HOME/bin:$PATH</code> &mdash; prepends <code>$HOME/bin</code> so the Solaris <code>nroff</code> shim shadows <code>/usr/bin/nroff</code>.</td></tr>
+          </tbody>
+        </table>
+        <p>The wrapper does <em>not</em> set or export <code>LESS</code> itself, so your <code>less</code> defaults (e.g. <code>-R -F -X</code>) are untouched. Arguments pass through verbatim &mdash; titles with spaces, glob characters, and unicode all reach <code>man</code> unsplit because the wrapper ends with a quoted <code>man "$@"</code>.</p>
+      </section>
+
+      <section class="tutorial-section">
+        <h2>Solaris nroff shim</h2>
+        <p>When <code>$OSTYPE</code> matches <code>solaris*</code>, the plugin entry writes a small <code>$HOME/bin/nroff</code> wrapper (only if one isn't already executable). Solaris <code>nroff</code> lacks the <code>-u</code> underline flag that man pages expect; the shim intercepts the <code>-u0 -Tlp -man</code> invocation and rewrites it to <code>/usr/bin/nroff -u$_NROFF_U</code>, passing any other invocation straight through. On Linux and macOS this branch never runs &mdash; the only side effects there are the <code>fpath+=</code> and <code>autoload -Uz man</code> lines.</p>
+      </section>
+
+      <section class="tutorial-section">
+        <h2>Try it</h2>
+<pre>man ls          # green bold header, bold-cyan underlined flags
+man git-rebase  # underlined options, standout search matches
+man bash        # the brick-sized manual, finally readable</pre>
+        <p>To confirm the wrapper is active: <code>whence -v man</code> should report <code>man</code> as a shell function (the autoloaded wrapper), not just <code>/usr/bin/man</code>.</p>
+      </section>
+
+      <section class="tutorial-section">
+        <h2>Scope &amp; non-goals</h2>
+        <table class="example-tbl">
+          <tbody>
+            <tr><td>No global env pollution</td><td>The <code>LESS_TERMCAP_*</code> vars are passed via <code>env</code> to the <code>man</code> subprocess only &mdash; they are never <code>export</code>ed into your interactive shell, so other <code>less</code> invocations stay uncolored.</td></tr>
+            <tr><td>No man / less config touched</td><td>No <code>~/.lesskey</code>, no <code>man.conf</code>, no system theme. Removing the plugin removes the coloring with no residue.</td></tr>
+            <tr><td>Recursion-safe</td><td>The inner function is named <code>__man</code>, not <code>man</code>, so the trailing <code>man "$@"</code> resolves to the system binary rather than re-entering the wrapper.</td></tr>
+            <tr><td>Pager-dependent</td><td>The coloring relies on <code>less</code> reading <code>LESS_TERMCAP_*</code>. If <code>less</code> is absent and <code>$PAGER</code> is something that ignores those vars, output falls back to plain text.</td></tr>
+          </tbody>
+        </table>
+      </section>
+
+      <section class="tutorial-section">
+        <h2>Engineering report</h2>
+        <p>For the full breakdown &mdash; the exact SGR color contract per <code>LESS_TERMCAP_*</code> key, the env-wrapper line-by-line, and the zunit test coverage map &mdash; see the <a href="report.html">engineering report</a>.</p>
+      </section>
+
+      <section class="tutorial-section">
+        <h2>Sibling plugins</h2>
+        <p>Part of the MenkeTechnologies zsh plugin family &mdash; the <a href="https://github.com/MenkeTechnologies/MenkeTechnologiesMeta" target="_blank" rel="noopener noreferrer">MenkeTechnologiesMeta</a> umbrella:</p>
+        <ul class="sibling-list">
+          <li><a href="https://github.com/MenkeTechnologies/zsh-learn" target="_blank" rel="noopener noreferrer">zsh-learn</a> &mdash; MySQL-backed flashcard / snippet store</li>
+          <li><a href="https://github.com/MenkeTechnologies/zsh-better-npm-completion" target="_blank" rel="noopener noreferrer">zsh-better-npm-completion</a> &mdash; cache-aware <code>npm install</code> completion</li>
+          <li><a href="https://github.com/MenkeTechnologies/zsh-cargo-completion" target="_blank" rel="noopener noreferrer">zsh-cargo-completion</a> &mdash; live <code>cargo add</code> / <code>cargo install</code> completion</li>
+          <li><a href="https://github.com/MenkeTechnologies/zsh-cpan-completion" target="_blank" rel="noopener noreferrer">zsh-cpan-completion</a> &mdash; live MetaCPAN <code>cpan</code> / <code>cpanm</code> completion</li>
+          <li><a href="https://github.com/MenkeTechnologies/zsh-dotnet-completion" target="_blank" rel="noopener noreferrer">zsh-dotnet-completion</a> &mdash; dotnet CLI completion</li>
+          <li><a href="https://github.com/MenkeTechnologies/zsh-expand" target="_blank" rel="noopener noreferrer">zsh-expand</a> &mdash; spacebar expansion</li>
+          <li><a href="https://github.com/MenkeTechnologies/zsh-git-acp" target="_blank" rel="noopener noreferrer">zsh-git-acp</a> &mdash; git aliases + add/commit/push keybindings</li>
+          <li><a href="https://github.com/MenkeTechnologies/zsh-more-completions" target="_blank" rel="noopener noreferrer">zsh-more-completions</a> &mdash; mega completion corpus</li>
+          <li><a href="https://github.com/MenkeTechnologies/zsh-sed-sub" target="_blank" rel="noopener noreferrer">zsh-sed-sub</a> &mdash; in-place sed substitution on the command line</li>
+          <li><a href="https://github.com/MenkeTechnologies/zsh-sudo" target="_blank" rel="noopener noreferrer">zsh-sudo</a> &mdash; ESC ESC to prepend sudo</li>
+        </ul>
+      </section>
+
+    </main>
+  </div>
+  <script src="hud-theme.js"></script>
+</body>
+</html>

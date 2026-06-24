@@ -1,0 +1,239 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="color-scheme" content="dark light">
+  <meta name="description" content="zsh-very-colorful-manuals — Engineering report. A zsh plugin that colorizes man pages by injecting 7 LESS_TERMCAP_* ANSI escapes into less via an env-wrapped man call. 43 zsh lines across 1 plugin entry + 1 bin/man wrapper, 1 __man helper function, 7 LESS_TERMCAP_* keys plus 3 env vars (PAGER/_NROFF_U/PATH), pinned by 48 zunit @test blocks across 7 t-*.zsh files. Solaris nroff shim, no global env leak, recursion-safe.">
+  <title>zsh-very-colorful-manuals &mdash; Engineering Report</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;600;700;900&amp;family=Share+Tech+Mono&amp;display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="hud-static.css">
+  <link rel="stylesheet" href="tutorial.css">
+  <style>
+    .tutorial-main { max-width: 72rem; }
+    .stat-grid { display:grid;grid-template-columns:repeat(auto-fill,minmax(13rem,1fr));gap:0.7rem;margin:1rem 0; }
+    .stat-card { border:1px solid var(--border);border-top:3px solid var(--cyan);background:var(--bg-card);padding:0.85rem 1rem;border-radius:2px;text-align:center; }
+    .stat-card .stat-val { font-family:'Orbitron',sans-serif;font-size:26px;font-weight:900;color:var(--cyan);line-height:1.1;text-shadow:0 0 18px var(--cyan-glow); }
+    .stat-card .stat-val.accent { color:var(--accent);text-shadow:0 0 18px var(--accent-glow); }
+    .stat-card .stat-val.green  { color:var(--green);text-shadow:0 0 18px rgba(57,255,20,.3); }
+    .stat-card .stat-label { font-family:'Orbitron',sans-serif;font-size:9px;font-weight:700;letter-spacing:1.8px;text-transform:uppercase;color:var(--text-muted);margin-top:0.45rem; }
+    .file-table { width:100%;border-collapse:collapse;margin:0.6rem 0;font-size:12px; }
+    .file-table th { background:var(--bg-secondary);color:var(--cyan);font-family:'Orbitron',sans-serif;font-size:10px;font-weight:700;letter-spacing:1.2px;text-transform:uppercase;text-align:left;padding:7px 10px;border:1px solid var(--border); }
+    .file-table td { padding:6px 10px;border:1px solid var(--border);color:var(--text-dim);vertical-align:middle; }
+    .file-table tr:hover td { background:var(--bg-hover); }
+    .file-table td:first-child { font-family:'Share Tech Mono',monospace;color:var(--accent-light);font-weight:600;white-space:nowrap; }
+    .file-table .num { text-align:right;font-family:'Share Tech Mono',monospace; }
+    .file-table .total-row td { background:var(--bg-secondary);font-weight:700;color:var(--text);border-top:2px solid var(--cyan); }
+    .file-table code { font-size:11px;color:var(--accent-light);background:var(--bg-primary);padding:1px 4px;border-radius:2px; }
+    .feature-grid { display:grid;grid-template-columns:repeat(auto-fill,minmax(20rem,1fr));gap:0.65rem;margin:0.8rem 0; }
+    .feature-card { border:1px solid var(--border);border-left:3px solid var(--cyan);background:var(--bg-card);padding:0.7rem 1rem;border-radius:2px; }
+    .feature-card h4 { font-family:'Orbitron',sans-serif;font-size:10px;font-weight:700;letter-spacing:1.5px;text-transform:uppercase;color:var(--cyan);margin:0 0 0.3rem; }
+    .feature-card p { margin:0;font-size:11px;color:var(--text-dim);line-height:1.55; }
+    .feature-card code { font-size:10.5px;color:var(--accent-light);background:var(--bg-primary);padding:1px 4px;border-radius:2px; }
+    .section-rule { border:none;border-top:1px dashed var(--border);margin:1.8rem 0; }
+  </style>
+</head>
+<body>
+  <div class="app tutorial-app" id="reportApp">
+    <div class="crt-scanline" id="crtH" aria-hidden="true"></div>
+    <div class="crt-scanline-v" id="crtV" aria-hidden="true"></div>
+
+    <header class="tutorial-header">
+      <div class="tutorial-header-inner">
+        <div>
+          <h1 class="tutorial-brand">// ZSH-VERY-COLORFUL-MANUALS &mdash; ENGINEERING REPORT</h1>
+          <nav class="tutorial-crumbs" aria-label="Breadcrumb">
+            <span class="current">Engineering Report</span>
+            <span class="sep">/</span>
+            <a href="index.html">Docs</a>
+            <span class="sep">/</span>
+            <a href="https://github.com/MenkeTechnologies/zsh-very-colorful-manuals" target="_blank" rel="noopener noreferrer">GitHub</a>
+            <span class="sep">/</span>
+            <a href="https://github.com/MenkeTechnologies/zpwr" target="_blank" rel="noopener noreferrer">zpwr</a>
+            <span class="sep">/</span>
+            <a href="https://github.com/MenkeTechnologies/MenkeTechnologiesMeta" target="_blank" rel="noopener noreferrer">Meta</a>
+          </nav>
+          <p style="margin:0.35rem 0 0;font-family:'Share Tech Mono',monospace;font-size:11px;color:var(--text-dim);letter-spacing:0.03em;opacity:0.75;">
+            autoloaded <code>man</code> wrapper &middot; <code>env</code>-injected <code>LESS_TERMCAP_*</code> ANSI escapes &middot; 7 termcap keys &middot; Solaris <code>nroff</code> shim &middot; no global env leak
+          </p>
+        </div>
+        <div class="tutorial-toolbar">
+          <button type="button" class="btn btn-secondary" id="btnTheme" title="Toggle light/dark">Theme</button>
+          <button type="button" class="btn btn-secondary active" id="btnCrt" title="CRT scanline overlay">CRT</button>
+          <button type="button" class="btn btn-secondary active" id="btnNeon" title="Neon border pulse">Neon</button>
+          <a class="btn btn-secondary" href="index.html">Docs</a>
+        </div>
+      </div>
+    </header>
+
+    <main class="tutorial-main">
+
+      <h2 class="tutorial-title"><span class="step-hash">&gt;_</span>EXECUTIVE SUMMARY</h2>
+      <p class="tutorial-subtitle">
+        <strong>zsh-very-colorful-manuals</strong> colorizes <code>man</code> pages by overriding the pager's termcap rendering. The plugin entry appends <code>${0:h}/bin</code> to <code>fpath</code> and runs <code>autoload -Uz man</code>; the autoloaded <code>bin/man</code> defines a <code>__man()</code> helper that runs the system <code>man</code> through <code>env</code> with <strong>7 <code>LESS_TERMCAP_*</code></strong> escapes plus <code>PAGER</code> / <code>_NROFF_U</code> / <code>PATH</code>. <code>less</code> reads those escapes to render bold headers green, underlined option names bold-cyan, and standout text bright-magenta. The variables live only in the <code>man</code> subprocess &mdash; nothing is exported into the interactive shell. Source: <strong>43 zsh lines</strong> across <strong>1 plugin entry + 1 <code>bin/man</code> wrapper</strong>. Pinned by <strong>48 <code>@test</code> blocks</strong> across <strong>7 zunit files</strong>.
+      </p>
+
+      <div class="stat-grid">
+        <div class="stat-card"><div class="stat-val">43</div><div class="stat-label">Zsh Lines (plugin + bin/man)</div></div>
+        <div class="stat-card"><div class="stat-val green">48</div><div class="stat-label">@test Blocks (zunit)</div></div>
+        <div class="stat-card"><div class="stat-val">7</div><div class="stat-label">Test Files</div></div>
+        <div class="stat-card"><div class="stat-val accent">7</div><div class="stat-label">LESS_TERMCAP_* Keys</div></div>
+        <div class="stat-card"><div class="stat-val">3</div><div class="stat-label">Other Env Vars (PAGER/_NROFF_U/PATH)</div></div>
+        <div class="stat-card"><div class="stat-val">1</div><div class="stat-label">Wrapper Fn (__man)</div></div>
+        <div class="stat-card"><div class="stat-val">1</div><div class="stat-label">bin/ Script (man)</div></div>
+        <div class="stat-card"><div class="stat-val">11</div><div class="stat-label">env-arg Continuation Lines</div></div>
+      </div>
+
+      <hr class="section-rule">
+
+      <h2 class="tutorial-title"><span class="step-hash">~</span>ARCHITECTURE</h2>
+      <p class="tutorial-subtitle">Two files. The plugin entry is the install surface (fpath + autoload + Solaris shim creation); <code>bin/man</code> is the actual color-injecting wrapper, resolved by zsh's autoload mechanism the first time <code>man</code> is called.</p>
+
+      <table class="file-table">
+        <thead>
+          <tr><th>File</th><th class="num">Lines</th><th>Role</th></tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td><code>zsh-very-colorful-manuals.plugin.zsh</code></td>
+            <td class="num">24</td>
+            <td>Plugin entry. On <code>$OSTYPE</code> = <code>solaris*</code>, writes a <code>$HOME/bin/nroff</code> shim (only if not already executable) that rewrites <code>-u0 -Tlp -man</code> to <code>/usr/bin/nroff -u$_NROFF_U</code>. Then the Zsh Plugin Standard <code>0=</code> header resolves <code>${0:h}</code> under zinit / oh-my-zsh / antibody / antigen / bare source; <code>fpath+="${0:h}/bin"</code> appends the wrapper dir (append, not assign &mdash; preserves existing fpath); <code>autoload -Uz man</code> registers the wrapper.</td>
+          </tr>
+          <tr>
+            <td><code>bin/man</code></td>
+            <td class="num">19</td>
+            <td>The color wrapper. Defines <code>__man()</code> which calls <code>env</code> with 7 <code>LESS_TERMCAP_*</code> escapes (each built via <code>printf '\e[&hellip;m'</code>), <code>PAGER=${commands[less]:-$PAGER}</code>, <code>_NROFF_U=1</code>, and <code>PATH="$HOME/bin:$PATH"</code>, then runs the system <code>man "$@"</code>. The file ends with <code>__man "$@"</code> so the autoloaded shadow invokes the helper. The helper is named <code>__man</code> (not <code>man</code>) so the inner <code>man</code> call hits the system binary &mdash; no recursion.</td>
+          </tr>
+          <tr class="total-row">
+            <td>Total source</td>
+            <td class="num">43</td>
+            <td>1 entry + 1 wrapper &middot; pure zsh, no compiled artifacts</td>
+          </tr>
+        </tbody>
+      </table>
+
+      <hr class="section-rule">
+
+      <h2 class="tutorial-title"><span class="step-hash">$</span>COLOR CONTRACT</h2>
+      <p class="tutorial-subtitle">Every <code>LESS_TERMCAP_*</code> escape is built with <code>printf '\e[CODEm'</code> so a real <code>0x1b</code> ESC byte (not the literal <code>\e</code> text) crosses the <code>env</code> boundary into <code>less</code>. The exact SGR code per key is pinned by the test suite; changing any one silently changes the palette. Below is the live mapping from <code>bin/man</code>.</p>
+
+      <table class="file-table">
+        <thead><tr><th>Termcap key</th><th>Role</th><th>SGR code</th><th>Color</th></tr></thead>
+        <tbody>
+          <tr><td><code>LESS_TERMCAP_md</code></td><td>bold start</td><td><code>0;32m</code></td><td>green &mdash; section headers</td></tr>
+          <tr><td><code>LESS_TERMCAP_me</code></td><td>bold end (reset)</td><td><code>0;34m</code></td><td>blue</td></tr>
+          <tr><td><code>LESS_TERMCAP_us</code></td><td>underline start</td><td><code>1;36;4m</code></td><td>bold cyan + underline &mdash; option names</td></tr>
+          <tr><td><code>LESS_TERMCAP_ue</code></td><td>underline end</td><td><code>0;1;31m</code></td><td>bright red</td></tr>
+          <tr><td><code>LESS_TERMCAP_so</code></td><td>standout start</td><td><code>0;1;35m</code></td><td>bright magenta &mdash; <code>(END)</code> marker, search matches</td></tr>
+          <tr><td><code>LESS_TERMCAP_se</code></td><td>standout end</td><td><code>33m</code></td><td>yellow</td></tr>
+          <tr><td><code>LESS_TERMCAP_mb</code></td><td>blink start</td><td><code>0;33;44m</code></td><td>yellow on blue</td></tr>
+        </tbody>
+      </table>
+
+      <hr class="section-rule">
+
+      <h2 class="tutorial-title"><span class="step-hash">=</span>ENVIRONMENT</h2>
+      <p class="tutorial-subtitle">Beyond the 7 <code>LESS_TERMCAP_*</code> keys, the <code>env</code> block carries three more variables into the <code>man</code> subprocess. None of these is <code>export</code>ed in the parent shell &mdash; <code>env</code> scopes them to the single <code>man</code> invocation. The wrapper deliberately does <em>not</em> set <code>LESS</code> itself, leaving user-set <code>less</code> defaults intact.</p>
+
+      <table class="file-table">
+        <thead><tr><th>Variable</th><th>Value</th><th>Effect</th></tr></thead>
+        <tbody>
+          <tr><td><code>PAGER</code></td><td><code>${commands[less]:-$PAGER}</code></td><td>Resolves zsh's <code>commands</code> hash for the absolute path to <code>less</code>, falling back to the user's <code>$PAGER</code>. Guarantees the page is rendered by a pager that honors <code>LESS_TERMCAP_*</code> (a <code>PAGER=most</code> user would otherwise lose the coloring).</td></tr>
+          <tr><td><code>_NROFF_U</code></td><td><code>1</code></td><td>Read by the Solaris <code>nroff</code> shim to enable underline (EUC) mode. No effect on Linux/macOS &mdash; the shim only exists on Solaris.</td></tr>
+          <tr><td><code>PATH</code></td><td><code>$HOME/bin:$PATH</code></td><td>Prepends <code>$HOME/bin</code> so the Solaris <code>nroff</code> shim (written by the plugin entry) shadows <code>/usr/bin/nroff</code>. Reversing the order would let system <code>nroff</code> win and drop the <code>-u</code> underline flag.</td></tr>
+        </tbody>
+      </table>
+
+      <hr class="section-rule">
+
+      <h2 class="tutorial-title"><span class="step-hash">#</span>TEST COVERAGE</h2>
+      <p class="tutorial-subtitle"><strong>48</strong> <code>@test</code> blocks across <strong>7</strong> zunit files. The bulk (<code>t-man-wrapper.zsh</code>, 19 tests) pins the exact SGR code per termcap key so a refactor can't silently change the palette; <code>t-man-passthrough.zsh</code> actually executes <code>__man</code> through a PATH-shimmed fake <code>man</code> and inspects the argv + environment the real <code>man</code> would receive. The contract files pin the install path (fpath append, autoload directive, entrypoint stem), the env-wrapper shape (env not exec/source, <code>man "$@"</code> passthrough, no <code>LESS</code> clobber, no parent-shell leak), and the Solaris shim. CI runs them under <a href="https://github.com/MenkeTechnologies/zunit" target="_blank" rel="noopener noreferrer">zunit</a>.</p>
+
+      <table class="file-table">
+        <thead><tr><th>File</th><th class="num">Tests</th><th>Pins</th></tr></thead>
+        <tbody>
+          <tr><td><code>t-man-wrapper.zsh</code></td><td class="num">19</td><td>Exact SGR code per <code>LESS_TERMCAP_*</code> key (mb/md/me/se/so/ue/us); <code>__man</code> helper name (not <code>man</code> &mdash; recursion guard); <code>env</code>-wrapper (not exec/source); 7-key count; <code>PAGER</code> prefers <code>commands[less]</code>; <code>_NROFF_U=1</code>; <code>PATH</code> prepend; trailing <code>__man "$@"</code>; Solaris shim creation; <code>fpath+=</code> append; <code>autoload -Uz man</code>; <code>whence -v man</code> resolves; &ge;11 continuation lines.</td></tr>
+          <tr><td><code>t-man-passthrough.zsh</code></td><td class="num">2</td><td>Behavioral: argv passes verbatim through <code>env</code> &mdash; spaces, globs, unicode, and <code>$()</code>-literal survive unsplit/unexpanded; <code>LESS_TERMCAP_mb</code> crosses the env boundary as a real <code>0x1b</code> ESC byte (hexdump <code>1b5b303b33333b34346d</code>), proving the <code>printf</code> evaluated.</td></tr>
+          <tr><td><code>t-syntax.zsh</code></td><td class="num">5</td><td><code>zsh -n</code> over <code>*.zsh</code> + <code>bin/man</code>; sourcing extends <code>fpath</code> with <code>bin/</code>; <code>bin/man</code> exists and references &ge;7 <code>LESS_TERMCAP_*</code> keys; <code>PAGER</code> wired to <code>less</code>.</td></tr>
+          <tr><td><code>t-contract.zsh</code></td><td class="num">7</td><td>Entrypoint stem matches dir basename; entrypoint parses; <code>#compdef</code> on any <code>_*</code> file; fpath augmented with <code>bin</code>; <code>autoload man</code> present; <code>bin/man</code> is a function file (no shebang); references <code>LESS_TERMCAP_(md|us|so|me)</code>.</td></tr>
+          <tr><td><code>t-contract2.zsh</code></td><td class="num">5</td><td><code>bin/man</code> basename is literally <code>man</code>; Solaris shim rewrites <code>-u0,-Tlp,-man</code>; no <code>LESS=</code> clobber; shim creation stays inside the Solaris branch; re-source doubles the fpath bin entry (current, unguarded behavior).</td></tr>
+          <tr><td><code>t-contract3.zsh</code></td><td class="num">5</td><td>Every <code>LESS_TERMCAP_*</code> value is a valid ANSI SGR sequence; no <code>export</code> of the escapes (env-only scope); zsh <code>function NAME()</code> shape; unquoted <code>EOF</code> heredoc (write-time interpolation); ends with plain <code>man "$@"</code>.</td></tr>
+          <tr><td><code>t-contract4.zsh</code></td><td class="num">5</td><td>All 7 <code>LESS_TERMCAP_*</code> vars in the env block (by count); <code>PAGER="${commands[less]:-$PAGER}"</code> exact shape; <code>_NROFF_U=1</code>; <code>PATH="$HOME/bin:$PATH"</code>; trailing <code>man "$@"</code> passthrough.</td></tr>
+          <tr class="total-row"><td>Total</td><td class="num">48</td><td>7 zunit files &middot; color-contract + env-wrapper shape + install-contract + Solaris shim</td></tr>
+        </tbody>
+      </table>
+
+      <hr class="section-rule">
+
+      <h2 class="tutorial-title"><span class="step-hash">/</span>DESIGN DECISIONS</h2>
+
+      <div class="feature-grid">
+        <div class="feature-card">
+          <h4>env-scoped, not exported</h4>
+          <p>The escapes are passed via <code>env LESS_TERMCAP_x=&hellip; man</code>, not <code>export</code>. They apply only to the <code>man</code> subprocess; the parent shell's other <code>less</code> invocations keep their own (or no) coloring. An <code>export</code> would silently pollute every <code>less</code> the user runs.</p>
+        </div>
+        <div class="feature-card">
+          <h4><code>__man</code> not <code>man</code></h4>
+          <p>The inner helper is named <code>__man</code>. The autoloaded function shadows <code>man</code> for the user, but the call at the end of the env block is the bare system <code>man</code>. Naming the helper <code>man</code> would make the wrapper call itself &mdash; infinite recursion.</p>
+        </div>
+        <div class="feature-card">
+          <h4>PAGER pins to <code>less</code></h4>
+          <p><code>${commands[less]:-$PAGER}</code> resolves the absolute path to <code>less</code> from zsh's command hash, falling back to <code>$PAGER</code>. Without this, a user whose <code>$PAGER</code> ignores <code>LESS_TERMCAP_*</code> (e.g. <code>most</code>) would get no coloring at all.</p>
+        </div>
+        <div class="feature-card">
+          <h4>fpath append, not assign</h4>
+          <p>The entry uses <code>fpath+="${0:h}/bin"</code>. Assigning (<code>fpath=(&hellip;)</code>) would wipe every other plugin's autoload directories. Append preserves them &mdash; at the cost that re-sourcing stacks duplicate entries (pinned as current behavior in <code>t-contract2</code>).</p>
+        </div>
+        <div class="feature-card">
+          <h4>Solaris shim, conditional</h4>
+          <p>Solaris <code>nroff</code> lacks the <code>-u</code> underline flag. The plugin writes a <code>$HOME/bin/nroff</code> shim &mdash; but only inside the <code>$OSTYPE = solaris*</code> branch, so Linux/macOS shells never create spurious files in <code>$HOME/bin</code>.</p>
+        </div>
+        <div class="feature-card">
+          <h4>Verbatim argv passthrough</h4>
+          <p>The wrapper ends with quoted <code>man "$@"</code>. Titles with spaces (<code>man "Tcl_NewObj"</code>), glob characters, unicode, and command-substitution-looking literals all reach <code>man</code> unsplit and unexpanded &mdash; pinned by the passthrough test against a PATH-shimmed fake <code>man</code>.</p>
+        </div>
+      </div>
+
+      <hr class="section-rule">
+
+      <h2 class="tutorial-title"><span class="step-hash">@</span>FOOTPRINT</h2>
+      <ul style="font-size:12px;color:var(--text-dim);line-height:1.7;">
+        <li><strong>Disk</strong>: 2 source files (plugin entry + <code>bin/man</code>), 43 lines total. No compiled artifacts. On Solaris, one generated <code>$HOME/bin/nroff</code> shim.</li>
+        <li><strong>Startup cost</strong>: the 24-line entry parse plus <code>autoload -Uz man</code> (lazy &mdash; <code>bin/man</code> body is not parsed until the first <code>man</code> call).</li>
+        <li><strong>Runtime cost</strong>: one <code>env</code> + one system <code>man</code> subprocess per invocation. No persistent state, no caches, no background process.</li>
+        <li><strong>External tools</strong>: the system <code>man</code> (required), <code>less</code> (the pager that reads <code>LESS_TERMCAP_*</code>; the wrapper prefers it over <code>$PAGER</code>), and on Solaris <code>/usr/bin/nroff</code> behind the shim.</li>
+        <li><strong>Side effects on the parent shell</strong>: <code>fpath</code> gains the <code>bin/</code> directory; <code>man</code> becomes an autoloaded function. No environment variables are exported &mdash; the <code>LESS_TERMCAP_*</code> escapes exist only inside each <code>man</code> subprocess.</li>
+      </ul>
+
+    </main>
+
+    <footer style="text-align:center;padding:2rem;font-size:10px;color:var(--text-muted);font-family:'Orbitron',sans-serif;letter-spacing:2px;">
+      ZSH-VERY-COLORFUL-MANUALS ENGINEERING REPORT &middot; 43 ZSH LINES &middot; 48 ZUNIT TESTS &middot; 7 LESS_TERMCAP KEYS &middot; ENV-SCOPED ANSI &middot; SOLARIS NROFF SHIM &middot; MENKETECHNOLOGIES
+    </footer>
+  </div>
+
+  <script>
+    const html = document.documentElement;
+    const btnTheme = document.getElementById('btnTheme');
+    const btnCrt = document.getElementById('btnCrt');
+    const btnNeon = document.getElementById('btnNeon');
+    const crtH = document.getElementById('crtH');
+    const crtV = document.getElementById('crtV');
+    btnTheme?.addEventListener('click', () => {
+      html.setAttribute('data-theme', html.getAttribute('data-theme') === 'light' ? 'dark' : 'light');
+    });
+    btnCrt?.addEventListener('click', () => {
+      btnCrt.classList.toggle('active');
+      const on = btnCrt.classList.contains('active');
+      if (crtH) crtH.style.display = on ? '' : 'none';
+      if (crtV) crtV.style.display = on ? '' : 'none';
+    });
+    btnNeon?.addEventListener('click', () => {
+      btnNeon.classList.toggle('active');
+      document.querySelector('.app')?.classList.toggle('neon-off');
+    });
+  </script>
+</body>
+</html>
