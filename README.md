@@ -19,7 +19,7 @@ __     __    _     _     ____  ____  _   _  ____
 
 ---
 
-[![Tag](https://img.shields.io/badge/tag-v0.1.0-39ff14.svg)](https://github.com/MenkeTechnologies/zsh-very-colorful-manuals/tags)
+[![Tag](https://img.shields.io/github/v/tag/MenkeTechnologies/zsh-very-colorful-manuals?sort=semver&label=tag&color=39ff14)](https://github.com/MenkeTechnologies/zsh-very-colorful-manuals/tags)
 [![Shell](https://img.shields.io/badge/shell-zsh-05d9e8.svg)](#install)
 [![Backend](https://img.shields.io/badge/backend-less%20env-d300c5.svg)](#how-it-works)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
